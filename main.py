@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from database import close_client
-from routers import pacientes, base, medicos, citas
+from database import connect_db, disconnect_db
+from routers import pacientes, base, citas, auth, consultas, facturas
 from config import settings
 import logging
 
@@ -17,11 +17,16 @@ async def lifespan(app: FastAPI):
     if not settings.database_configured:
         logger.warning("⚠️  Base de datos no configurada. Revisa las variables de entorno.")
     else:
-        logger.info("✅ Base de datos configurada correctamente")
+        logger.info("✅ Configuración de base de datos encontrada")
+        try:
+            await connect_db()
+            logger.info("✅ Conexión a PostgreSQL establecida")
+        except Exception as e:
+            logger.error(f"❌ Error conectando a base de datos: {e}")
     yield
     # Shutdown
     logger.info("Cerrando conexiones...")
-    await close_client()
+    await disconnect_db()
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -43,9 +48,11 @@ app.add_middleware(
 
 # Incluir routers
 app.include_router(base.router)
+app.include_router(auth.router)
 app.include_router(pacientes.router)
-app.include_router(medicos.router)
 app.include_router(citas.router)
+app.include_router(consultas.router)
+app.include_router(facturas.router)
 
 # Evento de startup adicional para logging
 @app.on_event("startup")
@@ -53,3 +60,6 @@ async def startup_event():
     logger.info(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} iniciado")
     logger.info(f"📚 Documentación disponible en: /docs")
     logger.info(f"🔄 ReDoc disponible en: /redoc")
+    logger.info("🔐 Endpoints públicos: POST /citas/reservar, POST /pacientes/")
+    logger.info("🩺 Endpoints médicos: /auth/login, /consultas/, /facturas/, /citas/, /pacientes/")
+    logger.info(f"🗄️  Conectando a: {settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
