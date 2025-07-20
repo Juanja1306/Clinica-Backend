@@ -1,6 +1,6 @@
 # 🏥 Sistema de Gestión de Clínica - Backend API
 
-Sistema backend completo para la gestión de una clínica médica desarrollado con **FastAPI** y **PostgreSQL**. Incluye funcionalidades separadas para pacientes (frontend público) y médicos (panel de administración).
+Sistema backend completo para la gestión de una clínica médica desarrollado con **FastAPI** y **PostgreSQL directo**. Incluye funcionalidades separadas para pacientes (frontend público) y médicos (panel de administración).
 
 ## 📋 Tabla de Contenidos
 
@@ -34,8 +34,9 @@ Sistema backend completo para la gestión de una clínica médica desarrollado c
 - ✅ API RESTful con FastAPI
 - ✅ Documentación automática (Swagger/OpenAPI)
 - ✅ Validación de datos con Pydantic
-- ✅ Autenticación JWT
-- ✅ Conexión a PostgreSQL via PostgREST
+- ✅ Autenticación JWT con bcrypt
+- ✅ Conexión directa a PostgreSQL con asyncpg
+- ✅ Pool de conexiones para alto rendimiento
 - ✅ Logging completo
 - ✅ Manejo de errores robusto
 
@@ -58,9 +59,10 @@ Usuario (solo médico)
 Clinica-Backend/
 ├── main.py                 # Aplicación principal FastAPI
 ├── config.py              # Configuración y variables de entorno
-├── database.py            # Cliente PostgREST y funciones de BD
+├── database.py            # Conexión directa PostgreSQL con asyncpg
 ├── utils.py               # Utilidades de autenticación y validación
 ├── requirements.txt       # Dependencias Python
+├── .env                   # Variables de entorno (crear localmente)
 ├── routers/              # Endpoints organizados por módulo
 │   ├── auth.py           # Autenticación del médico
 │   ├── base.py           # Endpoints generales
@@ -68,20 +70,21 @@ Clinica-Backend/
 │   ├── citas.py          # Gestión de citas
 │   ├── consultas.py      # Consultas médicas
 │   └── facturas.py       # Sistema de facturación
-└── schemas/              # Modelos Pydantic
-    ├── paciente.py
-    ├── cita.py
-    ├── consulta.py
-    ├── usuario.py
-    └── factura.py
+├── schemas/              # Modelos Pydantic
+│   ├── paciente.py       # Esquemas de paciente
+│   ├── cita.py           # Esquemas de cita
+│   ├── consulta.py       # Esquemas de consulta
+│   ├── usuario.py        # Esquemas de usuario
+│   └── factura.py        # Esquemas de factura
+└── sql/                  # Scripts SQL (si los hay)
 ```
 
 ## 🛠️ Instalación y Configuración
 
 ### Prerrequisitos
 
-- Python 3.8+
-- PostgreSQL con PostgREST configurado
+- Python 3.8+ (probado en Python 3.13)
+- PostgreSQL 12+ funcionando
 - pip (gestor de paquetes Python)
 
 ### Pasos de Instalación
@@ -111,13 +114,12 @@ pip install -r requirements.txt
 4. **Configurar variables de entorno**
 ```bash
 # Crear archivo .env en la raíz del proyecto
-cp .env.example .env
-# Editar .env con tus credenciales
+# Copiar y adaptar las variables de abajo
 ```
 
 5. **Ejecutar la aplicación**
 ```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload
 ```
 
 La API estará disponible en: `http://localhost:8000`
@@ -128,34 +130,38 @@ Crear un archivo `.env` en la raíz del proyecto:
 
 ```env
 # Configuración de la Base de Datos PostgreSQL
-POSTGREST_URL=http://localhost:3000
-POSTGREST_TOKEN=your_postgrest_token_here
+POSTGREST_URL=34.75.123.136
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=clinica
 
 # Configuración de Seguridad JWT
-SECRET_KEY=your-super-secret-jwt-key-here-change-in-production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+SECRET_KEY=tu-clave-secreta-jwt-para-produccion-cambiar
 
 # Configuración de la aplicación
 LOG_LEVEL=INFO
-GOOGLE_CLOUD_PROJECT=your_project_name
-
-# Configuración del entorno
-ENVIRONMENT=development
 ```
 
 ### Descripción de Variables
 
-- `POSTGREST_URL`: URL de tu instancia PostgREST
-- `POSTGREST_TOKEN`: Token de autenticación para PostgREST
+- `POSTGREST_URL`: **IP o host de PostgreSQL** (no es PostgREST, es la IP directa)
+- `DB_PORT`: Puerto de PostgreSQL (por defecto 5432)
+- `DB_USER`: Usuario de PostgreSQL
+- `DB_PASSWORD`: Contraseña de PostgreSQL
+- `DB_NAME`: Nombre de la base de datos
 - `SECRET_KEY`: Clave secreta para firmar tokens JWT (¡CAMBIAR EN PRODUCCIÓN!)
-- `ACCESS_TOKEN_EXPIRE_MINUTES`: Tiempo de expiración de tokens en minutos
+- `LOG_LEVEL`: Nivel de logging (DEBUG, INFO, WARNING, ERROR)
 
 ## 🗄️ Base de Datos
 
+### Conexión PostgreSQL
+
+El sistema se conecta **directamente** a PostgreSQL usando **asyncpg** con pool de conexiones para alto rendimiento.
+
 ### Esquema de Tablas
 
-El sistema requiere las siguientes tablas en PostgreSQL:
+Ejecutar estos scripts en tu PostgreSQL:
 
 ```sql
 -- Tabla de pacientes
@@ -214,9 +220,9 @@ CREATE TABLE facturas (
 
 1. **Crear usuario médico inicial**:
 ```sql
--- La contraseña debe ser hasheada con bcrypt
+-- Ejemplo con contraseña "medico123" hasheada
 INSERT INTO usuario (username, password_hash) 
-VALUES ('medico', '$2b$12$...'); -- Hash de tu contraseña
+VALUES ('medico', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4ePcv9o1vS');
 ```
 
 2. **Datos de prueba** (opcional):
@@ -224,6 +230,10 @@ VALUES ('medico', '$2b$12$...'); -- Hash de tu contraseña
 -- Paciente de ejemplo
 INSERT INTO pacientes (cedula, nombres, correo, telefono) 
 VALUES ('1234567890', 'Juan Pérez', 'juan@email.com', '0987654321');
+
+-- Cita de ejemplo
+INSERT INTO citas (fecha, hora, motivo, cedula_paciente, agendada_por_medico)
+VALUES ('2024-01-15', '10:30:00', 'Consulta general', '1234567890', false);
 ```
 
 ## 📚 Documentación de la API
@@ -234,6 +244,7 @@ Una vez que la aplicación esté ejecutándose:
 
 - **Swagger UI**: `http://localhost:8000/docs`
 - **ReDoc**: `http://localhost:8000/redoc`
+- **Health Check**: `http://localhost:8000/health`
 
 ### Endpoints Principales
 
@@ -277,7 +288,7 @@ Content-Type: application/json
 
 {
   "username": "medico",
-  "password": "tu_contraseña"
+  "password": "medico123"
 }
 
 Response:
@@ -289,7 +300,7 @@ Response:
 
 ##### Gestión de Pacientes
 ```http
-GET /pacientes/                          # Listar pacientes
+GET /pacientes/                          # Listar pacientes (requiere auth)
 GET /pacientes/{cedula}                   # Obtener paciente por cédula
 PUT /pacientes/{cedula}                   # Actualizar paciente
 DELETE /pacientes/{cedula}                # Eliminar paciente
@@ -308,7 +319,7 @@ DELETE /citas/{id}                       # Cancelar cita
 ```http
 POST /consultas/                         # Crear consulta
 GET /consultas/{cedula_paciente}         # Historial del paciente
-GET /consultas/                          # Listar consultas
+GET /consultas/                          # Listar todas las consultas
 GET /consultas/detalle/{id}              # Obtener consulta específica
 PUT /consultas/{id}                      # Actualizar consulta
 DELETE /consultas/{id}                   # Eliminar consulta
@@ -340,7 +351,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 1. **Reservar Cita**:
    ```
    Cliente → POST /citas/reservar
-   ├── Sistema verifica cédula
+   ├── Sistema valida cédula ecuatoriana
    ├── Crea paciente si no existe
    ├── Verifica disponibilidad de horario
    └── Crea cita con agendada_por_medico=false
@@ -350,7 +361,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 1. **Login**:
    ```
-   Médico → POST /auth/login → Recibe JWT token
+   Médico → POST /auth/login → Recibe JWT token (30 min)
    ```
 
 2. **Consultar Agenda**:
@@ -361,14 +372,14 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 3. **Atender Paciente**:
    ```
    a) Médico → GET /pacientes/{cedula} → Datos del paciente
-   b) Médico → GET /consultas/{cedula} → Historial médico
+   b) Médico → GET /consultas/{cedula} → Historial médico completo
    c) Médico → POST /consultas/ → Registra nueva consulta
-   d) Médico → POST /facturas/ → Genera factura
+   d) Médico → POST /facturas/ → Genera factura asociada
    ```
 
 4. **Gestionar Citas**:
    ```
-   Médico → POST /citas/ → Agendar nueva cita
+   Médico → POST /citas/ → Agendar nueva cita para paciente existente
    Médico → PUT /citas/{id} → Modificar cita existente
    Médico → DELETE /citas/{id} → Cancelar cita
    ```
@@ -382,34 +393,41 @@ import requests
 
 BASE_URL = "http://localhost:8000"
 
-# 1. Login del médico
+# 1. Verificar que la API esté funcionando
+health = requests.get(f"{BASE_URL}/health").json()
+print(f"API Status: {health['status']}")
+
+# 2. Login del médico
 login_response = requests.post(f"{BASE_URL}/auth/login", json={
     "username": "medico",
-    "password": "mi_contraseña"
+    "password": "medico123"
 })
 token = login_response.json()["access_token"]
 headers = {"Authorization": f"Bearer {token}"}
 
-# 2. Ver citas del día
+# 3. Ver citas del día
 citas = requests.get(
     f"{BASE_URL}/citas/?fecha=2024-01-15", 
     headers=headers
 ).json()
+print(f"Citas del día: {len(citas)}")
 
-# 3. Obtener datos del paciente
+# 4. Obtener datos del paciente
 cedula_paciente = "1234567890"
 paciente = requests.get(
     f"{BASE_URL}/pacientes/{cedula_paciente}", 
     headers=headers
 ).json()
+print(f"Paciente: {paciente['nombres']}")
 
-# 4. Ver historial médico
+# 5. Ver historial médico
 historial = requests.get(
     f"{BASE_URL}/consultas/{cedula_paciente}", 
     headers=headers
 ).json()
+print(f"Consultas previas: {len(historial)}")
 
-# 5. Registrar nueva consulta
+# 6. Registrar nueva consulta
 consulta = requests.post(f"{BASE_URL}/consultas/", 
     headers=headers,
     json={
@@ -417,12 +435,11 @@ consulta = requests.post(f"{BASE_URL}/consultas/",
         "diagnostico": "Hipertensión leve",
         "tratamiento": "Enalapril 10mg cada 12h",
         "observaciones": "Control en 2 semanas",
-        "cedula_paciente": cedula_paciente,
-        "cita_id": 1
+        "cedula_paciente": cedula_paciente
     }
 ).json()
 
-# 6. Generar factura
+# 7. Generar factura
 factura = requests.post(f"{BASE_URL}/facturas/", 
     headers=headers,
     json={
@@ -434,104 +451,199 @@ factura = requests.post(f"{BASE_URL}/facturas/",
     }
 ).json()
 
-print(f"Consulta registrada ID: {consulta['id']}")
-print(f"Factura generada ID: {factura['id']}")
+print(f"✅ Consulta registrada ID: {consulta['id']}")
+print(f"✅ Factura generada ID: {factura['id']}, Valor: ${factura['valor']}")
+```
+
+### Ejemplo: Reserva de Cita desde Cliente
+
+```python
+import requests
+
+BASE_URL = "http://localhost:8000"
+
+# Cliente reserva cita (sin autenticación)
+nueva_cita = requests.post(f"{BASE_URL}/citas/reservar", json={
+    "cedula": "0987654321",
+    "nombres": "María García",
+    "correo": "maria@email.com", 
+    "telefono": "0991234567",
+    "fecha": "2024-01-16",
+    "hora": "14:30:00",
+    "motivo": "Chequeo anual"
+}).json()
+
+print(f"✅ Cita reservada ID: {nueva_cita['id']}")
+print(f"📅 Fecha: {nueva_cita['fecha']} {nueva_cita['hora']}")
 ```
 
 ## 🔒 Seguridad
 
 ### Características de Seguridad Implementadas
 
-- **Autenticación JWT**: Tokens seguros con expiración
+- **Autenticación JWT**: Tokens seguros con expiración (30 minutos)
 - **Validación de cédula**: Algoritmo de validación ecuatoriana
 - **Hashing de contraseñas**: bcrypt para almacenamiento seguro
 - **Validación de datos**: Pydantic para validación estricta
 - **CORS configurado**: Control de acceso desde frontends
+- **Pool de conexiones**: Previene ataques de agotamiento
 - **Logging de seguridad**: Registro de intentos de login
 
 ### Recomendaciones de Producción
 
-1. **Cambiar SECRET_KEY**: Usar una clave robusta en producción
-2. **HTTPS**: Implementar certificados SSL/TLS
-3. **Variables de entorno**: No commitear credenciales al repositorio
+1. **SECRET_KEY fuerte**: Generar clave de 256 bits para JWT
+2. **HTTPS obligatorio**: Certificados SSL/TLS en producción
+3. **Firewall PostgreSQL**: Restringir acceso solo desde la aplicación
 4. **Rate limiting**: Implementar límites de peticiones
-5. **Backup de BD**: Configurar respaldos automáticos
+5. **Backup automático**: Configurar respaldos diarios de BD
+6. **Monitoreo**: Logs centralizados y alertas
 
 ## 🐛 Solución de Problemas
 
 ### Problemas Comunes
 
-#### Error de Conexión a Base de Datos
+#### Error de Conexión a PostgreSQL
 ```
-Error: POSTGREST_URL no está configurada
+❌ Error conectando a PostgreSQL: connection refused
 ```
-**Solución**: Verificar que el archivo `.env` existe y contiene las variables correctas.
+**Solución**: 
+- Verificar que PostgreSQL esté ejecutándose
+- Comprobar IP, puerto y credenciales en `.env`
+- Verificar firewall y conectividad de red
 
 #### Token JWT Inválido
 ```
 401 Unauthorized: No se pudieron validar las credenciales
 ```
 **Solución**: 
-- Verificar que el token no haya expirado
-- Asegurar que el header Authorization esté correcto
-- Verificar que SECRET_KEY sea la misma
+- Token expirado (válido 30 minutos) → hacer login nuevamente
+- Header Authorization mal formateado → usar `Bearer {token}`
+- SECRET_KEY diferente → verificar consistency
 
 #### Cédula Inválida
 ```
 400 Bad Request: Cédula inválida
 ```
-**Solución**: La cédula debe tener exactamente 10 dígitos y pasar la validación ecuatoriana.
+**Solución**: 
+- Cédula debe tener exactamente 10 dígitos
+- Debe pasar algoritmo de validación ecuatoriana
+- No usar cédulas ficticias como "1234567890"
 
 #### Conflicto de Horarios
 ```
 400 Bad Request: Ya existe una cita programada para esa fecha y hora
 ```
-**Solución**: Verificar disponibilidad antes de agendar o cambiar horario.
+**Solución**: 
+- El sistema previene double-booking
+- Verificar agenda antes de agendar
+- Usar horarios diferentes
+
+#### Pool de Conexiones Agotado
+```
+❌ Error: Pool de base de datos no inicializado
+```
+**Solución**: 
+- Reiniciar la aplicación
+- Verificar que PostgreSQL acepte conexiones
+- Revisar logs de base de datos
 
 ### Logs Útiles
 
 ```bash
-# Ver logs en tiempo real
-tail -f logs/app.log
+# Ver logs de la aplicación
+# Los logs aparecen en la consola donde ejecutas uvicorn
 
-# Buscar errores específicos
-grep "ERROR" logs/app.log
+# Verificar conexión a BD
+curl http://localhost:8000/health
 
-# Ver intentos de login
-grep "Login" logs/app.log
+# Ver documentación
+curl http://localhost:8000/docs
 ```
 
 ### Health Check
 
-Verificar que la aplicación esté funcionando:
+```bash
+curl http://localhost:8000/health
+```
 
-```http
-GET /health
-
-Response:
+Respuesta exitosa:
+```json
 {
   "status": "healthy",
-  "database": "connected",
+  "database": "connected", 
   "message": "Aplicación funcionando correctamente"
 }
 ```
 
+### Comandos de Verificación
+
+```bash
+# Verificar que la aplicación inicie
+uvicorn main:app --reload
+
+# Probar endpoint público
+curl -X POST http://localhost:8000/pacientes/ \
+  -H "Content-Type: application/json" \
+  -d '{"cedula":"1234567890","nombres":"Test User","correo":"test@test.com","telefono":"0999999999"}'
+
+# Probar login
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"medico","password":"medico123"}'
+```
+
+## 🚀 Despliegue
+
+### Producción Local
+
+```bash
+# Con Gunicorn para producción
+pip install gunicorn
+gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
+```
+
+### Variables de Producción
+
+```env
+# .env para producción
+POSTGREST_URL=tu-ip-produccion
+DB_PORT=5432
+DB_USER=clinica_user
+DB_PASSWORD=contraseña-muy-segura
+DB_NAME=clinica_prod
+SECRET_KEY=clave-jwt-de-256-bits-super-segura
+LOG_LEVEL=WARNING
+```
+
+## 📊 Monitoreo
+
+### Métricas Importantes
+
+- **Conexiones activas**: Pool de PostgreSQL
+- **Tiempo de respuesta**: Endpoints críticos
+- **Errores 5xx**: Fallos del servidor
+- **Intentos de login**: Seguridad
+- **Uso de memoria**: Aplicación Python
+
 ## 🤝 Contribución
 
 1. Fork el proyecto
-2. Crear rama para feature (`git checkout -b feature/AmazingFeature`)
-3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
+2. Crear rama para feature (`git checkout -b feature/NuevaFuncionalidad`)
+3. Commit cambios (`git commit -m 'Agregar nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/NuevaFuncionalidad`)
 5. Abrir Pull Request
 
 ## 📄 Licencia
 
 Este proyecto está bajo la licencia MIT. Ver `LICENSE` para más detalles.
 
-## 👥 Equipo
+## 👥 Autor
 
-Desarrollado para sistema de clínica médica con separación clara entre funcionalidades públicas y privadas.
+Desarrollado para sistema de clínica médica con arquitectura moderna y separación clara entre funcionalidades públicas y privadas.
 
 ---
 
-**¿Necesitas ayuda?** Revisa la documentación interactiva en `/docs` o consulta los logs de la aplicación para más detalles sobre errores específicos. 
+**🩺 ¿Necesitas ayuda?** 
+- Revisa la documentación interactiva en `/docs`
+- Verifica el health check en `/health`
+- Consulta los logs de la consola para errores específicos 
