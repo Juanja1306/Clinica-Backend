@@ -1,206 +1,514 @@
-# Clínica Backend API
+# 🏥 Sistema de Gestión de Clínica - Backend API
 
-API backend para sistema de clínica desarrollada con FastAPI y PostgreSQL vía PostgREST.
+Sistema backend completo para la gestión de una clínica médica desarrollado con **FastAPI** y **PostgreSQL**. Incluye funcionalidades separadas para pacientes (frontend público) y médicos (panel de administración).
 
-## 🏗️ Arquitectura
+## 📋 Tabla de Contenidos
 
-- **FastAPI**: Framework web moderno y rápido
-- **PostgreSQL**: Base de datos relacional en Google Cloud SQL
-- **PostgREST**: API REST automática sobre PostgreSQL
-- **Google Cloud**: Infraestructura en la nube
+- [Características](#-características)
+- [Arquitectura del Sistema](#-arquitectura-del-sistema)
+- [Instalación y Configuración](#-instalación-y-configuración)
+- [Variables de Entorno](#-variables-de-entorno)
+- [Base de Datos](#-base-de-datos)
+- [Documentación de la API](#-documentación-de-la-api)
+- [Flujos de Trabajo](#-flujos-de-trabajo)
+- [Ejemplos de Uso](#-ejemplos-de-uso)
+- [Seguridad](#-seguridad)
+- [Solución de Problemas](#-solución-de-problemas)
 
-## 📁 Estructura del Proyecto
+## 🚀 Características
+
+### Para Pacientes (Público)
+- ✅ Registro automático de pacientes
+- ✅ Reserva de citas sin autenticación
+- ✅ Validación de cédula ecuatoriana
+
+### Para Médicos (Autenticado)
+- ✅ Autenticación JWT segura
+- ✅ Gestión completa de pacientes
+- ✅ Agenda de citas con control de horarios
+- ✅ Historial clínico completo
+- ✅ Sistema de facturación
+- ✅ Reportes de facturación
+
+### Técnicas
+- ✅ API RESTful con FastAPI
+- ✅ Documentación automática (Swagger/OpenAPI)
+- ✅ Validación de datos con Pydantic
+- ✅ Autenticación JWT
+- ✅ Conexión a PostgreSQL via PostgREST
+- ✅ Logging completo
+- ✅ Manejo de errores robusto
+
+## 🏗️ Arquitectura del Sistema
+
+### Entidades Principales
+
+```
+Paciente (PK: cedula)
+├── Cita (FK: cedula_paciente)
+├── Consulta (FK: cedula_paciente, cita_id opcional)
+└── Factura (FK: cedula_paciente, consulta_id opcional)
+
+Usuario (solo médico)
+```
+
+### Estructura del Proyecto
 
 ```
 Clinica-Backend/
-├── main.py                 # Aplicación principal
-├── database.py             # Conexión y operaciones de base de datos
-├── config.py               # Configuración centralizada
-├── requirements.txt        # Dependencias de Python
-├── routers/               # Endpoints organizados por módulos
-│   ├── __init__.py
-│   ├── base.py            # Endpoints generales
-│   ├── pacientes.py       # Gestión de pacientes
-│   ├── medicos.py         # Gestión de médicos
-│   └── citas.py           # Gestión de citas médicas
-├── schemas/               # Validación de datos con Pydantic
-│   ├── __init__.py
-│   └── paciente.py        # Esquemas para pacientes
-└── utils.py               # Utilidades generales
+├── main.py                 # Aplicación principal FastAPI
+├── config.py              # Configuración y variables de entorno
+├── database.py            # Cliente PostgREST y funciones de BD
+├── utils.py               # Utilidades de autenticación y validación
+├── requirements.txt       # Dependencias Python
+├── routers/              # Endpoints organizados por módulo
+│   ├── auth.py           # Autenticación del médico
+│   ├── base.py           # Endpoints generales
+│   ├── pacientes.py      # Gestión de pacientes
+│   ├── citas.py          # Gestión de citas
+│   ├── consultas.py      # Consultas médicas
+│   └── facturas.py       # Sistema de facturación
+└── schemas/              # Modelos Pydantic
+    ├── paciente.py
+    ├── cita.py
+    ├── consulta.py
+    ├── usuario.py
+    └── factura.py
 ```
 
-## 🚀 Instalación y Configuración
+## 🛠️ Instalación y Configuración
 
-### 1. Clonar y configurar entorno
+### Prerrequisitos
 
+- Python 3.8+
+- PostgreSQL con PostgREST configurado
+- pip (gestor de paquetes Python)
+
+### Pasos de Instalación
+
+1. **Clonar el repositorio**
 ```bash
-# Clonar el repositorio
-git clone <repository-url>
+git clone <tu-repositorio>
 cd Clinica-Backend
+```
 
-# Crear entorno virtual
-python -m venv .venv
+2. **Crear entorno virtual**
+```bash
+python -m venv venv
 
-# Activar entorno virtual
-# En Windows:
-.venv\Scripts\activate
-# En Linux/Mac:
-source .venv/bin/activate
+# Windows
+venv\Scripts\activate
 
-# Instalar dependencias
+# Linux/Mac
+source venv/bin/activate
+```
+
+3. **Instalar dependencias**
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configurar variables de entorno
-
-Crear archivo `.env` en la raíz del proyecto:
-
-```env
-# Configuración de PostgREST para Google Cloud SQL PostgreSQL
-POSTGREST_URL=https://tu-postgrest-instance.run.app
-POSTGREST_TOKEN=tu-jwt-token-aqui
-
-# Configuración adicional (opcional)
-LOG_LEVEL=INFO
-SECRET_KEY=tu-clave-secreta-aqui
-GOOGLE_CLOUD_PROJECT=tu-proyecto-gcp
+4. **Configurar variables de entorno**
+```bash
+# Crear archivo .env en la raíz del proyecto
+cp .env.example .env
+# Editar .env con tus credenciales
 ```
 
-### 3. Ejecutar la aplicación
-
+5. **Ejecutar la aplicación**
 ```bash
-# Desarrollo
-uvicorn main:app --reload
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 
-# Producción
-uvicorn main:app --host 0.0.0.0 --port 8000
+La API estará disponible en: `http://localhost:8000`
+
+## 🔧 Variables de Entorno
+
+Crear un archivo `.env` en la raíz del proyecto:
+
+```env
+# Configuración de la Base de Datos PostgreSQL
+POSTGREST_URL=http://localhost:3000
+POSTGREST_TOKEN=your_postgrest_token_here
+
+# Configuración de Seguridad JWT
+SECRET_KEY=your-super-secret-jwt-key-here-change-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Configuración de la aplicación
+LOG_LEVEL=INFO
+GOOGLE_CLOUD_PROJECT=your_project_name
+
+# Configuración del entorno
+ENVIRONMENT=development
+```
+
+### Descripción de Variables
+
+- `POSTGREST_URL`: URL de tu instancia PostgREST
+- `POSTGREST_TOKEN`: Token de autenticación para PostgREST
+- `SECRET_KEY`: Clave secreta para firmar tokens JWT (¡CAMBIAR EN PRODUCCIÓN!)
+- `ACCESS_TOKEN_EXPIRE_MINUTES`: Tiempo de expiración de tokens en minutos
+
+## 🗄️ Base de Datos
+
+### Esquema de Tablas
+
+El sistema requiere las siguientes tablas en PostgreSQL:
+
+```sql
+-- Tabla de pacientes
+CREATE TABLE pacientes (
+    cedula CHAR(10) PRIMARY KEY,
+    nombres VARCHAR(100) NOT NULL,
+    correo VARCHAR(100),
+    telefono VARCHAR(15)
+);
+
+-- Tabla de citas
+CREATE TABLE citas (
+    id SERIAL PRIMARY KEY,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    motivo TEXT,
+    cedula_paciente CHAR(10) NOT NULL,
+    agendada_por_medico BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (cedula_paciente) REFERENCES pacientes(cedula)
+);
+
+-- Tabla de consultas
+CREATE TABLE consultas (
+    id SERIAL PRIMARY KEY,
+    fecha DATE NOT NULL,
+    diagnostico TEXT,
+    tratamiento TEXT,
+    observaciones TEXT,
+    cedula_paciente CHAR(10) NOT NULL,
+    cita_id INTEGER,
+    FOREIGN KEY (cedula_paciente) REFERENCES pacientes(cedula),
+    FOREIGN KEY (cita_id) REFERENCES citas(id)
+);
+
+-- Tabla de usuario (médico)
+CREATE TABLE usuario (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL
+);
+
+-- Tabla de facturas
+CREATE TABLE facturas (
+    id SERIAL PRIMARY KEY,
+    fecha DATE NOT NULL,
+    valor NUMERIC(10, 2) NOT NULL,
+    descripcion TEXT,
+    cedula_paciente CHAR(10) NOT NULL,
+    consulta_id INTEGER,
+    FOREIGN KEY (cedula_paciente) REFERENCES pacientes(cedula),
+    FOREIGN KEY (consulta_id) REFERENCES consultas(id)
+);
+```
+
+### Configuración Inicial
+
+1. **Crear usuario médico inicial**:
+```sql
+-- La contraseña debe ser hasheada con bcrypt
+INSERT INTO usuario (username, password_hash) 
+VALUES ('medico', '$2b$12$...'); -- Hash de tu contraseña
+```
+
+2. **Datos de prueba** (opcional):
+```sql
+-- Paciente de ejemplo
+INSERT INTO pacientes (cedula, nombres, correo, telefono) 
+VALUES ('1234567890', 'Juan Pérez', 'juan@email.com', '0987654321');
 ```
 
 ## 📚 Documentación de la API
+
+### Documentación Interactiva
 
 Una vez que la aplicación esté ejecutándose:
 
 - **Swagger UI**: `http://localhost:8000/docs`
 - **ReDoc**: `http://localhost:8000/redoc`
-- **OpenAPI JSON**: `http://localhost:8000/openapi.json`
 
-## 🔗 Endpoints Principales
+### Endpoints Principales
 
-### Endpoints Generales
-- `GET /` - Mensaje de bienvenida
-- `GET /health` - Estado de la aplicación y conexión DB
-- `GET /saludo/{nombre}` - Saludo personalizado
+#### 🔓 Endpoints Públicos (Sin Autenticación)
 
-### Pacientes (`/pacientes`)
-- `GET /pacientes/` - Obtener todos los pacientes
-- `GET /pacientes/{id}` - Obtener paciente por ID
-- `POST /pacientes/` - Crear nuevo paciente
-- `PUT /pacientes/{id}` - Actualizar paciente
-- `DELETE /pacientes/{id}` - Eliminar paciente
-- `GET /pacientes/buscar/por-campo` - Buscar pacientes
+##### Crear Paciente
+```http
+POST /pacientes/
+Content-Type: application/json
 
-### Médicos (`/medicos`)
-- `GET /medicos/` - Obtener todos los médicos
-- `GET /medicos/{id}` - Obtener médico por ID
-- `POST /medicos/` - Crear nuevo médico
-- `GET /medicos/especialidad/{especialidad}` - Médicos por especialidad
+{
+  "cedula": "1234567890",
+  "nombres": "Juan Pérez",
+  "correo": "juan@email.com",
+  "telefono": "0987654321"
+}
+```
 
-### Citas (`/citas`)
-- `GET /citas/` - Obtener todas las citas
-- `GET /citas/{id}` - Obtener cita por ID
-- `POST /citas/` - Crear nueva cita
-- `PUT /citas/{id}` - Actualizar cita
-- `GET /citas/paciente/{id}` - Citas de un paciente
-- `GET /citas/medico/{id}` - Citas de un médico
+##### Reservar Cita (Cliente)
+```http
+POST /citas/reservar
+Content-Type: application/json
 
-## 🛠️ Ejemplo de Uso
+{
+  "cedula": "1234567890",
+  "nombres": "Juan Pérez",
+  "correo": "juan@email.com",
+  "telefono": "0987654321",
+  "fecha": "2024-01-15",
+  "hora": "10:30:00",
+  "motivo": "Consulta general"
+}
+```
 
-### Crear un paciente
+#### 🔐 Endpoints Autenticados (Médico)
+
+##### Login
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "username": "medico",
+  "password": "tu_contraseña"
+}
+
+Response:
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer"
+}
+```
+
+##### Gestión de Pacientes
+```http
+GET /pacientes/                          # Listar pacientes
+GET /pacientes/{cedula}                   # Obtener paciente por cédula
+PUT /pacientes/{cedula}                   # Actualizar paciente
+DELETE /pacientes/{cedula}                # Eliminar paciente
+```
+
+##### Gestión de Citas
+```http
+GET /citas/                              # Listar citas
+POST /citas/                             # Crear cita (médico)
+GET /citas/{id}                          # Obtener cita específica
+PUT /citas/{id}                          # Actualizar cita
+DELETE /citas/{id}                       # Cancelar cita
+```
+
+##### Consultas Médicas
+```http
+POST /consultas/                         # Crear consulta
+GET /consultas/{cedula_paciente}         # Historial del paciente
+GET /consultas/                          # Listar consultas
+GET /consultas/detalle/{id}              # Obtener consulta específica
+PUT /consultas/{id}                      # Actualizar consulta
+DELETE /consultas/{id}                   # Eliminar consulta
+```
+
+##### Facturación
+```http
+POST /facturas/                          # Crear factura
+GET /facturas/                           # Listar facturas
+GET /facturas/{cedula_paciente}          # Facturas del paciente
+GET /facturas/detalle/{id}               # Obtener factura específica
+PUT /facturas/{id}                       # Actualizar factura
+DELETE /facturas/{id}                    # Eliminar factura
+GET /facturas/reportes/resumen           # Resumen de facturación
+```
+
+### Autenticación
+
+Para endpoints protegidos, incluir el token en el header:
+
+```http
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+## 🔄 Flujos de Trabajo
+
+### Flujo Cliente (Frontend Público)
+
+1. **Reservar Cita**:
+   ```
+   Cliente → POST /citas/reservar
+   ├── Sistema verifica cédula
+   ├── Crea paciente si no existe
+   ├── Verifica disponibilidad de horario
+   └── Crea cita con agendada_por_medico=false
+   ```
+
+### Flujo Médico (Panel de Administración)
+
+1. **Login**:
+   ```
+   Médico → POST /auth/login → Recibe JWT token
+   ```
+
+2. **Consultar Agenda**:
+   ```
+   Médico → GET /citas/?fecha=2024-01-15 → Lista de citas del día
+   ```
+
+3. **Atender Paciente**:
+   ```
+   a) Médico → GET /pacientes/{cedula} → Datos del paciente
+   b) Médico → GET /consultas/{cedula} → Historial médico
+   c) Médico → POST /consultas/ → Registra nueva consulta
+   d) Médico → POST /facturas/ → Genera factura
+   ```
+
+4. **Gestionar Citas**:
+   ```
+   Médico → POST /citas/ → Agendar nueva cita
+   Médico → PUT /citas/{id} → Modificar cita existente
+   Médico → DELETE /citas/{id} → Cancelar cita
+   ```
+
+## 💡 Ejemplos de Uso
+
+### Ejemplo Completo: Flujo de Atención
+
+```python
+import requests
+
+BASE_URL = "http://localhost:8000"
+
+# 1. Login del médico
+login_response = requests.post(f"{BASE_URL}/auth/login", json={
+    "username": "medico",
+    "password": "mi_contraseña"
+})
+token = login_response.json()["access_token"]
+headers = {"Authorization": f"Bearer {token}"}
+
+# 2. Ver citas del día
+citas = requests.get(
+    f"{BASE_URL}/citas/?fecha=2024-01-15", 
+    headers=headers
+).json()
+
+# 3. Obtener datos del paciente
+cedula_paciente = "1234567890"
+paciente = requests.get(
+    f"{BASE_URL}/pacientes/{cedula_paciente}", 
+    headers=headers
+).json()
+
+# 4. Ver historial médico
+historial = requests.get(
+    f"{BASE_URL}/consultas/{cedula_paciente}", 
+    headers=headers
+).json()
+
+# 5. Registrar nueva consulta
+consulta = requests.post(f"{BASE_URL}/consultas/", 
+    headers=headers,
+    json={
+        "fecha": "2024-01-15",
+        "diagnostico": "Hipertensión leve",
+        "tratamiento": "Enalapril 10mg cada 12h",
+        "observaciones": "Control en 2 semanas",
+        "cedula_paciente": cedula_paciente,
+        "cita_id": 1
+    }
+).json()
+
+# 6. Generar factura
+factura = requests.post(f"{BASE_URL}/facturas/", 
+    headers=headers,
+    json={
+        "fecha": "2024-01-15",
+        "valor": 40.00,
+        "descripcion": "Consulta médica general",
+        "cedula_paciente": cedula_paciente,
+        "consulta_id": consulta["id"]
+    }
+).json()
+
+print(f"Consulta registrada ID: {consulta['id']}")
+print(f"Factura generada ID: {factura['id']}")
+```
+
+## 🔒 Seguridad
+
+### Características de Seguridad Implementadas
+
+- **Autenticación JWT**: Tokens seguros con expiración
+- **Validación de cédula**: Algoritmo de validación ecuatoriana
+- **Hashing de contraseñas**: bcrypt para almacenamiento seguro
+- **Validación de datos**: Pydantic para validación estricta
+- **CORS configurado**: Control de acceso desde frontends
+- **Logging de seguridad**: Registro de intentos de login
+
+### Recomendaciones de Producción
+
+1. **Cambiar SECRET_KEY**: Usar una clave robusta en producción
+2. **HTTPS**: Implementar certificados SSL/TLS
+3. **Variables de entorno**: No commitear credenciales al repositorio
+4. **Rate limiting**: Implementar límites de peticiones
+5. **Backup de BD**: Configurar respaldos automáticos
+
+## 🐛 Solución de Problemas
+
+### Problemas Comunes
+
+#### Error de Conexión a Base de Datos
+```
+Error: POSTGREST_URL no está configurada
+```
+**Solución**: Verificar que el archivo `.env` existe y contiene las variables correctas.
+
+#### Token JWT Inválido
+```
+401 Unauthorized: No se pudieron validar las credenciales
+```
+**Solución**: 
+- Verificar que el token no haya expirado
+- Asegurar que el header Authorization esté correcto
+- Verificar que SECRET_KEY sea la misma
+
+#### Cédula Inválida
+```
+400 Bad Request: Cédula inválida
+```
+**Solución**: La cédula debe tener exactamente 10 dígitos y pasar la validación ecuatoriana.
+
+#### Conflicto de Horarios
+```
+400 Bad Request: Ya existe una cita programada para esa fecha y hora
+```
+**Solución**: Verificar disponibilidad antes de agendar o cambiar horario.
+
+### Logs Útiles
 
 ```bash
-curl -X POST "http://localhost:8000/pacientes/" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "nombre": "Juan",
-       "apellido": "Pérez",
-       "email": "juan.perez@email.com",
-       "telefono": "1234567890",
-       "fecha_nacimiento": "1990-01-15"
-     }'
+# Ver logs en tiempo real
+tail -f logs/app.log
+
+# Buscar errores específicos
+grep "ERROR" logs/app.log
+
+# Ver intentos de login
+grep "Login" logs/app.log
 ```
 
-### Buscar pacientes
+### Health Check
 
-```bash
-curl "http://localhost:8000/pacientes/buscar/por-campo?nombre=Juan&limit=10"
-```
+Verificar que la aplicación esté funcionando:
 
-## 🔧 Configuración para Google Cloud
+```http
+GET /health
 
-### 1. PostgreSQL en Cloud SQL
-```bash
-# Crear instancia PostgreSQL
-gcloud sql instances create clinica-db \
-    --database-version=POSTGRES_14 \
-    --tier=db-f1-micro \
-    --region=us-central1
-```
-
-### 2. PostgREST en Cloud Run
-```bash
-# Desplegar PostgREST
-gcloud run deploy postgrest \
-    --image postgrest/postgrest \
-    --platform managed \
-    --region us-central1 \
-    --allow-unauthenticated
-```
-
-### 3. Variables de entorno
-- Configurar `POSTGREST_URL` con la URL de Cloud Run
-- Configurar `POSTGREST_TOKEN` con JWT válido
-
-## 📝 Esquemas de Base de Datos
-
-### Tabla Pacientes
-```sql
-CREATE TABLE pacientes (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    apellido VARCHAR(100) NOT NULL,
-    email VARCHAR(255),
-    telefono VARCHAR(15),
-    fecha_nacimiento DATE,
-    direccion VARCHAR(200),
-    sexo CHAR(1) CHECK (sexo IN ('M', 'F', 'O')),
-    tipo_documento VARCHAR(50),
-    numero_documento VARCHAR(50),
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-## 🔍 Características
-
-- ✅ **API RESTful completa** con operaciones CRUD
-- ✅ **Validación de datos** con Pydantic
-- ✅ **Documentación automática** con Swagger/ReDoc
-- ✅ **Arquitectura modular** con routers
-- ✅ **Manejo de errores** robusto
-- ✅ **Logging configurable**
-- ✅ **CORS configurado** para desarrollo/producción
-- ✅ **Type hints** completos
-- ✅ **Async/await** para alto rendimiento
-- ✅ **Google Cloud Ready**
-
-## 🚦 Health Check
-
-```bash
-curl http://localhost:8000/health
-```
-
-Respuesta esperada:
-```json
+Response:
 {
   "status": "healthy",
   "database": "connected",
@@ -208,17 +516,22 @@ Respuesta esperada:
 }
 ```
 
-## 🔐 Consideraciones de Seguridad
+## 🤝 Contribución
 
-1. **Variables de entorno**: Nunca commits archivos `.env`
-2. **JWT Tokens**: Usar tokens seguros para PostgREST
-3. **CORS**: Configurar orígenes específicos en producción
-4. **HTTPS**: Usar HTTPS en producción
-5. **Validación**: Todos los inputs son validados con Pydantic
+1. Fork el proyecto
+2. Crear rama para feature (`git checkout -b feature/AmazingFeature`)
+3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abrir Pull Request
 
-## 📞 Soporte
+## 📄 Licencia
 
-Para preguntas o problemas, revisar:
-1. Los logs de la aplicación
-2. El endpoint `/health` para verificar conectividad
-3. La documentación en `/docs` 
+Este proyecto está bajo la licencia MIT. Ver `LICENSE` para más detalles.
+
+## 👥 Equipo
+
+Desarrollado para sistema de clínica médica con separación clara entre funcionalidades públicas y privadas.
+
+---
+
+**¿Necesitas ayuda?** Revisa la documentación interactiva en `/docs` o consulta los logs de la aplicación para más detalles sobre errores específicos. 
