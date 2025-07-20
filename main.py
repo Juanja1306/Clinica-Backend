@@ -1,11 +1,55 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from database import close_client
+from routers import pacientes, base, medicos, citas
+from config import settings
+import logging
 
-app = FastAPI()
+# Configurar logging
+logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL))
+logger = logging.getLogger(__name__)
 
-@app.get("/")
-def read_root():
-    return {"mensaje": "¡Hola mundo desde FastAPI!"}
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("Iniciando aplicación...")
+    if not settings.database_configured:
+        logger.warning("⚠️  Base de datos no configurada. Revisa las variables de entorno.")
+    else:
+        logger.info("✅ Base de datos configurada correctamente")
+    yield
+    # Shutdown
+    logger.info("Cerrando conexiones...")
+    await close_client()
 
-@app.get("/saludo/{nombre}")
-def saludar(nombre: str):
-    return {"saludo": f"Hola, {nombre}!"}
+app = FastAPI(
+    title=settings.APP_NAME,
+    description=settings.APP_DESCRIPTION,
+    version=settings.APP_VERSION,
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=settings.ALLOWED_METHODS,
+    allow_headers=settings.ALLOWED_HEADERS,
+)
+
+# Incluir routers
+app.include_router(base.router)
+app.include_router(pacientes.router)
+app.include_router(medicos.router)
+app.include_router(citas.router)
+
+# Evento de startup adicional para logging
+@app.on_event("startup")
+async def startup_event():
+    logger.info(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} iniciado")
+    logger.info(f"📚 Documentación disponible en: /docs")
+    logger.info(f"🔄 ReDoc disponible en: /redoc")
