@@ -1,99 +1,53 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from utils import authenticate_user, create_access_token
-from schemas.usuario import UsuarioLogin, Token
-import logging
+# Auth.py
+from fastapi import APIRouter, HTTPException, Depends, status
+from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from datetime import timedelta
 
-# Configurar logging
-logger = logging.getLogger(__name__)
-
-# Crear router para autenticación
-router = APIRouter(
-    prefix="/auth",
-    tags=["autenticación"],
-    responses={401: {"description": "No autorizado"}}
+from models import Usuario
+from database import get_db
+from schemas.auth import UserCreate, Token
+from utils import get_current_user
+from utils.security import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
 )
 
-@router.post("/login", response_model=Token)
-async def login_medico(user_credentials: UsuarioLogin):
-    """
-    Autenticar al médico y generar token de acceso
-    
-    Args:
-        user_credentials: Credenciales del usuario (username y password)
-        
-    Returns:
-        Token: Token de acceso JWT
-        
-    Raises:
-        HTTPException: Si las credenciales son incorrectas
-    """
-    try:
-        # Autenticar usuario
-        user = await authenticate_user(user_credentials.username, user_credentials.password)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales incorrectas",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # Crear token de acceso
-        access_token = create_access_token(data={"sub": user["username"]})
-        
-        logger.info(f"Login exitoso para usuario: {user['username']}")
-        
-        return {
-            "access_token": access_token,
-            "token_type": "bearer"
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error durante login: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor"
-        )
+router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/login-form", response_model=Token)
-async def login_form(form_data: OAuth2PasswordRequestForm = Depends()):
-    """
-    Endpoint alternativo para login usando OAuth2PasswordRequestForm
-    Compatible con la documentación automática de FastAPI
-    
-    Args:
-        form_data: Datos del formulario OAuth2
-        
-    Returns:
-        Token: Token de acceso JWT
-    """
-    try:
-        # Autenticar usuario
-        user = await authenticate_user(form_data.username, form_data.password)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales incorrectas",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # Crear token de acceso
-        access_token = create_access_token(data={"sub": user["username"]})
-        
-        logger.info(f"Login exitoso para usuario: {user['username']}")
-        
-        return {
-            "access_token": access_token,
-            "token_type": "bearer"
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error durante login: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor"
-        )
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+
+@router.post("/register", response_model=Token)
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(Usuario).filter_by(username=user.username).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Usuario ya existe")
+
+    hashed_pw = get_password_hash(user.password)
+    nuevo_usuario = Usuario(username=user.username, password_hash=hashed_pw)
+    db.add(nuevo_usuario)
+    db.commit()
+    db.refresh(nuevo_usuario)
+
+    access_token = create_access_token(data={"sub": nuevo_usuario.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/login", response_model=Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(Usuario).filter_by(username=form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+# Ruta protegida de prueba
+@router.get("/me")
+def get_current_user_info(current_user: Usuario = Depends(get_current_user)):
+    return {"username": current_user.username, "id": current_user.id}
+
+

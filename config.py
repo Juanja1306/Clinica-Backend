@@ -7,12 +7,12 @@ load_dotenv()
 class Settings:
     """Configuración de la aplicación"""
     
-    # Base de datos PostgreSQL directa
-    DB_HOST: str = os.getenv("POSTGREST_URL", "localhost")  # Usando POSTGREST_URL como DB_HOST
-    DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
-    DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
-    DB_NAME: str = os.getenv("DB_NAME", "clinica")
+    # Base de datos PostgreSQL
+    DB_HOST: str = os.getenv("POSTGREST_URL")
+    DB_PORT: int = int(os.getenv("DB_PORT"))
+    DB_USER: str = os.getenv("DB_USER")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD")
+    DB_NAME: str = os.getenv("DB_NAME")
     
     # Aplicación
     APP_NAME: str = "Clínica Backend API"
@@ -31,8 +31,8 @@ class Settings:
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
-    # JWT (si usas autenticación propia)
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
+    # JWT
+    SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
