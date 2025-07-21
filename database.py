@@ -174,3 +174,10 @@ async def execute_query_one(query: str, values: Optional[List] = None) -> Option
     except Exception as e:
         logger.error(f"Error ejecutando consulta: {e}")
         raise
+
+# Dependency para FastAPI
+async def get_db():
+    """
+    Dependency para obtener la instancia de la base de datos
+    """
+    return database
