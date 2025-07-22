@@ -2,8 +2,16 @@ from pydantic import BaseModel
 
 class UserCreate(BaseModel):
     username: str
-    password: str
+    password_hash: str
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+    class Config:
+        orm_mode = True
+
+class User(BaseModel):
+    id: int
+    username: str
+
+    class Config:
+        orm_mode = True
+
+
