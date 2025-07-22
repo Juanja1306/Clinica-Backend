@@ -178,3 +178,28 @@ async def get_db():
     Dependency para obtener la instancia de la base de datos
     """
     return database
+
+
+async def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    """
+    Obtener un usuario por email
+    """
+    try:
+        query = "SELECT * FROM usuario WHERE email = $1"
+        row = await database.fetch_one(query, [email])
+        return dict(row) if row else None
+    except Exception as e:  
+        logger.error(f"Error al obtener usuario por email: {e}")
+        raise
+
+async def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
+    """
+    Obtener un usuario por username
+    """
+    try:
+        query = "SELECT * FROM usuario WHERE username = $1"
+        row = await database.fetch_one(query, [username])
+        return dict(row) if row else None
+    except Exception as e:
+        logger.error(f"Error al obtener usuario por username: {e}")
+        raise
