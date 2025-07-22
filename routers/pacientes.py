@@ -10,9 +10,9 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=Paciente)
-async def create_paciente(paciente: PacienteCreate):
+async def create_paciente(payload: PacienteCreate):
     try:
-        return await insert_into_table("paciente", paciente.dict())
+        return await insert_into_table("paciente", payload.dict())
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
