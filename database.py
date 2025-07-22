@@ -114,8 +114,9 @@ async def delete_record(table_name: str, id_field: str, id_value: Any) -> bool:
     Eliminar un registro
     """
     try:
-        query = f"DELETE FROM {table_name} WHERE {id_field} = $1"
-        await database.execute(query, [id_value])
+        # Usar parámetro nombrado para evitar error de bindparams con lista
+        query = f"DELETE FROM {table_name} WHERE {id_field} = :id_value"
+        await database.execute(query, {"id_value": id_value})
         return True
     except Exception as e:
         logger.error(f"Error al eliminar de {table_name} con {id_field}={id_value}: {e}")

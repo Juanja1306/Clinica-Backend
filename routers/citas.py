@@ -1,6 +1,7 @@
+from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from schemas.citas import CitaReserve, Cita
-from database import get_by_id, insert_into_table
+from database import delete_record, get_all_from_table, get_by_id, insert_into_table
 from utils import get_current_user
 
 router = APIRouter(
@@ -30,7 +31,7 @@ async def reservar_cita(payload: CitaReserve):
     })
     return cita
 
-@router.post("/agendar", response_model=Cita)
+@router.post("/", response_model=Cita)
 async def agendar_cita(
     payload: CitaReserve,
     current_user: dict = Depends(get_current_user),
@@ -52,3 +53,17 @@ async def agendar_cita(
         "agendada_por_medico": True,
     })
     return cita
+
+@router.get("/", response_model=List[Cita])
+async def get_citas(
+    current_user: dict = Depends(get_current_user),
+):
+    return await get_all_from_table("cita")
+
+@router.delete("/{id}")
+async def delete_cita(
+    id: int,
+    current_user: dict = Depends(get_current_user),
+):
+    success = await delete_record("cita", "id", id)
+    return {"deleted": success}
