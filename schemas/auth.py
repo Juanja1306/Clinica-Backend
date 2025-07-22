@@ -5,14 +5,14 @@ class UserCreate(BaseModel):
     password_hash: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class User(BaseModel):
     id: int
     username: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserLogin(BaseModel):
     username: str

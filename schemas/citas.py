@@ -20,4 +20,4 @@ class Cita(BaseModel):
     agendada_por_medico: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True

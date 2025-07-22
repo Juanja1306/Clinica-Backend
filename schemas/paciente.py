@@ -9,4 +9,4 @@ class PacienteCreate(BaseModel):
 
 class Paciente(PacienteCreate):
     class Config:
-        orm_mode = True
+        from_attributes = True
