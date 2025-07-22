@@ -205,3 +205,27 @@ async def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error al obtener usuario por username: {e}")
         raise
+
+async def get_consultas_by_paciente(cedula_paciente: str) -> List[Dict[str, Any]]:
+    """
+    Obtener todas las consultas de un paciente
+    """
+    try:
+        query = "SELECT * FROM consulta WHERE cedula_paciente = :cedula_paciente"
+        rows = await database.fetch_all(query, {"cedula_paciente": cedula_paciente})
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Error al obtener consultas por paciente: {e}")
+        raise
+
+async def get_facturas_by_paciente(cedula_paciente: str) -> List[Dict[str, Any]]:
+    """
+    Obtener todas las facturas de un paciente
+    """
+    try:
+        query = "SELECT * FROM factura WHERE cedula_paciente = :cedula_paciente"
+        rows = await database.fetch_all(query, {"cedula_paciente": cedula_paciente})
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Error al obtener facturas por paciente: {e}")
+        raise

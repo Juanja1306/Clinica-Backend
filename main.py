@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import connect_db, disconnect_db
-from routers import health, auth, pacientes, citas
+from routers import health, auth, pacientes, citas, consultas, facturas
 from config import settings
 import logging
 
@@ -51,6 +51,8 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(pacientes.router)
 app.include_router(citas.router)
+app.include_router(consultas.router)
+app.include_router(facturas.router)
 
 # Evento de startup adicional para logging
 @app.on_event("startup")
