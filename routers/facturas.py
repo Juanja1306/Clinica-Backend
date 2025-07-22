@@ -21,9 +21,9 @@ async def create_factura(payload: FacturaCreate, current_user: dict = Depends(ge
 async def get_facturas(current_user: dict = Depends(get_current_user)):
     return await get_all_from_table("factura")
 
-@router.get("/{cedula_paciente}", response_model=List[Factura])
-async def get_facturas_paciente(cedula_paciente: str, current_user: dict = Depends(get_current_user)):
-    facturas = await get_facturas_by_paciente(cedula_paciente)
+@router.get("/{cedula}", response_model=List[Factura])
+async def get_facturas_paciente(cedula: str, current_user: dict = Depends(get_current_user)):
+    facturas = await get_facturas_by_paciente(cedula)
     if not facturas:
         raise HTTPException(status_code=404, detail="No se encontraron facturas para el paciente")
     return facturas

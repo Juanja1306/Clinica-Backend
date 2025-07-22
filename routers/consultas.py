@@ -17,9 +17,9 @@ async def create_consulta(payload: ConsultaCreate, current_user: dict = Depends(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{cedula_paciente}", response_model=List[Consulta])
-async def get_consultas(cedula_paciente: str, current_user: dict = Depends(get_current_user)):
-    consultas = await get_consultas_by_paciente(cedula_paciente)
+@router.get("/{cedula}", response_model=List[Consulta])
+async def get_consultas(cedula: str, current_user: dict = Depends(get_current_user)):
+    consultas = await get_consultas_by_paciente(cedula)
     if not consultas:
         raise HTTPException(status_code=404, detail="No se encontraron consultas para el paciente")
     return consultas
