@@ -1,15 +1,12 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 
-class PacienteBase(BaseModel):
-    cedula: str = Field(..., max_length=10)
-    nombres: str = Field(..., max_length=100)
-    correo: Optional[str] = Field(None, max_length=100)
-    telefono: Optional[str] = Field(None, max_length=15)
+class PacienteCreate(BaseModel):
+    cedula: str
+    nombres: str
+    correo: Optional[str] = None
+    telefono: Optional[str] = None
 
-class PacienteCreate(PacienteBase):
-    pass
-
-class Paciente(PacienteBase):
+class Paciente(PacienteCreate):
     class Config:
         orm_mode = True
