@@ -39,17 +39,11 @@ async def get_all_from_table(table_name: str, limit: Optional[int] = None, offse
     """
     try:
         query = f"SELECT * FROM {table_name}"
-        params = []
-        
-        if limit:
-            query += f" LIMIT ${len(params) + 1}"
-            params.append(limit)
-        
-        if offset:
-            query += f" OFFSET ${len(params) + 1}"
-            params.append(offset)
-        
-        rows = await database.fetch_all(query, params)
+        if limit is not None:
+            query += f" LIMIT {limit}"
+        if offset is not None:
+            query += f" OFFSET {offset}"
+        rows = await database.fetch_all(query)
         return [dict(row) for row in rows]
     except Exception as e:
         logger.error(f"Error al obtener datos de {table_name}: {e}")
@@ -73,16 +67,19 @@ async def insert_into_table(table_name: str, data: Dict[str, Any]) -> Dict[str, 
     """
     try:
         fields = list(data.keys())
-        placeholders = [f"${i+1}" for i in range(len(fields))]
-        values = list(data.values())
-        
-        query = f"""
-        INSERT INTO {table_name} ({', '.join(fields)}) 
-        VALUES ({', '.join(placeholders)}) 
-        RETURNING *
-        """
-        
-        row = await database.fetch_one(query, values)
+        # Build named placeholders and map values
+        param_map: Dict[str, Any] = {}
+        placeholders: List[str] = []
+        for i, field in enumerate(fields):
+            key = f"param_{i+1}"
+            placeholders.append(f":{key}")
+            param_map[key] = data[field]
+        query_str = (
+            f"INSERT INTO {table_name} ({', '.join(fields)}) "
+            f"VALUES ({', '.join(placeholders)}) "
+            f"RETURNING *"
+        )
+        row = await database.fetch_one(query_str, param_map)
         return dict(row)
     except Exception as e:
         logger.error(f"Error al insertar en {table_name}: {e}")
