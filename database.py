@@ -185,8 +185,8 @@ async def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     Obtener un usuario por email
     """
     try:
-        query = "SELECT * FROM usuario WHERE email = $1"
-        row = await database.fetch_one(query, [email])
+        query = "SELECT * FROM usuario WHERE email = :email"
+        row = await database.fetch_one(query, {"email": email})
         return dict(row) if row else None
     except Exception as e:  
         logger.error(f"Error al obtener usuario por email: {e}")
@@ -197,8 +197,8 @@ async def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
     Obtener un usuario por username
     """
     try:
-        query = "SELECT * FROM usuario WHERE username = $1"
-        row = await database.fetch_one(query, [username])
+        query = "SELECT * FROM usuario WHERE username = :username"
+        row = await database.fetch_one(query, {"username": username})
         return dict(row) if row else None
     except Exception as e:
         logger.error(f"Error al obtener usuario por username: {e}")
