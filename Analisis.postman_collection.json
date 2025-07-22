@@ -1,0 +1,430 @@
+{
+	"info": {
+		"_postman_id": "c67ab79c-4d61-4e20-9b84-e4e1d6a9a7c1",
+		"name": "Analisis",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "37010167"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "registry medico",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"medico\",\r\n    \"password_hash\": \"Pass0000.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURLFastAPI}}/auth/register",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"medico\",\r\n  \"password\": \"Pass0000.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURLFastAPI}}/auth/login",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Pacientes",
+			"item": [
+				{
+					"name": "get all",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURLFastAPI}}/pacientes/",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"pacientes",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "registrar paciente",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"cedula\": \"0104434456\",\r\n  \"nombres\": \"Juanito Alimaña\",\r\n  \"correo\": \"juanito@gmail.com\",\r\n  \"telefono\": \"0989765432\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURLFastAPI}}/pacientes/",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"pacientes",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Citas",
+			"item": [
+				{
+					"name": "reservar",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"cedula\": \"0104434456\",\r\n  \"nombres\": \"Juanito Alimaña\",\r\n  \"correo\": \"juanito@gmail.com\",\r\n  \"telefono\": \"0989765432\",\r\n  \"fecha\": \"2025-07-22\",\r\n  \"hora\": \"14:30:00\",\r\n  \"motivo\": \"Chequeo general\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURLFastAPI}}/citas/reservar",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"citas",
+								"reservar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "agendar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtZWRpY28iLCJleHAiOjE3NTMxNjU1NTB9.ygQ5lCfh6yUvAzBYvZLmEfuFqMnc-AfUWoxkoyN11aA",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"cedula\": \"0203340405\",\r\n  \"nombres\": \"Felipe Peraltinio\",\r\n  \"correo\": \"felipinio@gmail.com\",\r\n  \"telefono\": \"0987678987\",\r\n  \"fecha\": \"2025-07-22\",\r\n  \"hora\": \"14:30:00\",\r\n  \"motivo\": \"Chequeo general\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURLFastAPI}}/citas/",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"citas",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "citas",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtZWRpY28iLCJleHAiOjE3NTMxNjU1NTB9.ygQ5lCfh6yUvAzBYvZLmEfuFqMnc-AfUWoxkoyN11aA",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURLFastAPI}}/citas/",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"citas",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "cita",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtZWRpY28iLCJleHAiOjE3NTMxNjU1NTB9.ygQ5lCfh6yUvAzBYvZLmEfuFqMnc-AfUWoxkoyN11aA",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURLFastAPI}}/citas/4",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"citas",
+								"4"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Consultas",
+			"item": [
+				{
+					"name": "consultas cedula",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURLFastAPI}}/consultas/0203340405",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"consultas",
+								"0203340405"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "consultas cedula Copy",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"cedula_paciente\": \"0203340405\",\r\n    \"diagnostico\": \"Hemorroides\",\r\n    \"tratamiento\": \"Ibuprofeno 500ml 1c/8h\",\r\n    \"observaciones\": \"Revisar Lunar en espalda\",\r\n    \"cita_id\": \"3\",\r\n    \"fecha\": \"2025-07-22\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURLFastAPI}}/consultas/",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"consultas",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Factura",
+			"item": [
+				{
+					"name": "Todas Facturas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURLFastAPI}}/facturas/",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"facturas",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Una Factura",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURLFastAPI}}/facturas/0203340405",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"facturas",
+								"0203340405"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Hacer Factura",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"cedula_paciente\": \"0203340405\",\r\n    \"valor\": \"35.50\",\r\n    \"descripcion\": \"Carito le salio\",\r\n    \"consulta_id\": \"3\",\r\n    \"fecha\": \"2025-07-22\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURLFastAPI}}/facturas/",
+							"host": [
+								"{{baseURLFastAPI}}"
+							],
+							"path": [
+								"facturas",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "health",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"felipe\",\r\n  \"password\": \"felipe\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURLFastAPI}}/health",
+					"host": [
+						"{{baseURLFastAPI}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtZWRpY28iLCJleHAiOjE3NTMyMDI1NzR9.N2oDfVHisR_INrA1xuKygU12GLHfx1K6B-NPq79GBug",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURLFastAPI",
+			"value": "http://127.0.0.1:8000",
+			"type": "default"
+		}
+	]
+}
