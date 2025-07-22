@@ -46,10 +46,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get
     except JWTError:
         raise credentials_exception
 
-    user = await database.fetch_one(
-        "SELECT * FROM usuarios WHERE username = $1", 
-        [username]
-    )
+    # Obtener usuario por username usando parámetro nombrado y tabla correcta
+    query = "SELECT * FROM usuario WHERE username = :username"
+    user = await database.fetch_one(query, {"username": username})
     if user is None:
         raise credentials_exception
     return dict(user)
