@@ -54,8 +54,9 @@ async def get_by_id(table_name: str, id_field: str, id_value: Any) -> Optional[D
     Obtener un registro por ID
     """
     try:
-        query = f"SELECT * FROM {table_name} WHERE {id_field} = $1"
-        row = await database.fetch_one(query, [id_value])
+        # Usar parámetro nombrado para evitar error de bindparams con lista
+        query = f"SELECT * FROM {table_name} WHERE {id_field} = :id_value"
+        row = await database.fetch_one(query, {"id_value": id_value})
         return dict(row) if row else None
     except Exception as e:
         logger.error(f"Error al obtener registro de {table_name} con {id_field}={id_value}: {e}")
