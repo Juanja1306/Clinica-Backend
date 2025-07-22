@@ -20,10 +20,14 @@ async def register(payload: UserCreate):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/login", response_model=User)
+@router.post("/login")
 async def login(payload: UserLogin):
     user = await get_user_by_username(payload.username)
-    # Verificar que el usuario exista y coincida la contraseña
     if not user or not verify_password(payload.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    return user
+    # Generar token JWT con expiración de 2 horas
+    token = create_access_token(
+        data={"sub": user["username"]},
+        expires_delta=timedelta(hours=2)
+    )
+    return {"id": user["id"], "username": user["username"], "token": token}
