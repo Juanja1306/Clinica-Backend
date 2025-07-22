@@ -100,10 +100,3 @@ La API estará disponible en `http://localhost:8000`
 | Método | Ruta          | Descripción      |
 |--------|---------------|------------------|
 | GET    | /health/      | Verificar estado |
-
-## Licencia
-MIT (o la que corresponda)
-
-## Contribuciones
-Contribuciones bienvenidas. Abrir issues o pull requests.
-
